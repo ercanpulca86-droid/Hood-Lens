@@ -41,13 +41,27 @@ input, textarea {
 }
 
 button {
-  width:100%;
-  padding:12px;
+  padding:10px;
   background:#00c805;
   border:none;
   border-radius:8px;
-  font-weight:bold;
   cursor:pointer;
+  margin-top:5px;
+}
+
+.delete {
+  background:red;
+}
+
+.feature {
+  background:gold;
+  color:black;
+}
+
+.search {
+  margin-bottom:20px;
+  padding:10px;
+  width:300px;
 }
 
 .grid {
@@ -67,22 +81,13 @@ button {
   transform:scale(1.03);
 }
 
-.card h3 {
-  margin:0;
-}
-
-.card p {
-  color:#aaa;
-}
-
-a {
-  color:#00c805;
-  text-decoration:none;
-}
-
 .badge {
   font-size:12px;
   color:#00c805;
+}
+
+.featured {
+  border:2px solid gold;
 }
 </style></head><body><div class="header">🟢 Hood Lens</div><div class="container"><div class="form">
 <h3>Add Project</h3><input id="name" placeholder="Project Name">
@@ -90,10 +95,9 @@ a {
 <input id="website" placeholder="Website">
 <textarea id="desc" placeholder="Description"></textarea><button onclick="addProject()">List Project</button>
 
-</div><h2>Projects</h2>
+</div><input class="search" placeholder="Search..." oninput="render(this.value)"><h2>Projects</h2>
 <div class="grid" id="list"></div></div><script>
 
-// load from storage
 let projects = JSON.parse(localStorage.getItem("projects")) || [];
 
 function save() {
@@ -102,37 +106,58 @@ function save() {
 
 function addProject() {
   const project = {
-    name: document.getElementById("name").value,
-    symbol: document.getElementById("symbol").value,
-    website: document.getElementById("website").value,
-    desc: document.getElementById("desc").value,
+    name: name.value,
+    symbol: symbol.value,
+    website: website.value,
+    desc: desc.value,
+    featured: false,
     date: new Date().toLocaleDateString()
   };
 
-  if (!project.name) {
-    alert("Project name required!");
-    return;
-  }
+  if (!project.name) return alert("Name gerekli");
 
   projects.unshift(project);
   save();
   render();
 }
 
-function render() {
+function deleteProject(index) {
+  projects.splice(index,1);
+  save();
+  render();
+}
+
+function toggleFeature(index) {
+  projects[index].featured = !projects[index].featured;
+  save();
+  render();
+}
+
+function render(search="") {
   const list = document.getElementById("list");
   list.innerHTML = "";
 
-  projects.forEach(p => {
-    list.innerHTML += `
-      <div class="card">
-        <h3>${p.name} (${p.symbol})</h3>
-        <p class="badge">Listed: ${p.date}</p>
-        <p>${p.desc}</p>
-        <a href="${p.website}" target="_blank">Visit →</a>
-      </div>
-    `;
-  });
+  projects
+    .filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+    .sort((a,b) => b.featured - a.featured)
+    .forEach((p, i) => {
+      list.innerHTML += `
+        <div class="card ${p.featured ? 'featured':''}">
+          <h3>${p.name} (${p.symbol})</h3>
+          <p class="badge">${p.date}</p>
+          <p>${p.desc}</p>
+          <a href="${p.website}" target="_blank">Visit</a><br><br>
+
+          <button class="feature" onclick="toggleFeature(${i})">
+            ⭐ Feature
+          </button>
+
+          <button class="delete" onclick="deleteProject(${i})">
+            Delete
+          </button>
+        </div>
+      `;
+    });
 }
 
 render();
